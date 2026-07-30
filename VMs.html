@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Virtual Infrastructure Control Panel</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+background:#0d1117;
+color:white;
+padding:25px;
+}
+
+h1{
+font-size:34px;
+margin-bottom:5px;
+}
+
+.subtitle{
+color:#8b949e;
+margin-bottom:25px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:18px;
+}
+
+.vm{
+background:#161b22;
+border:1px solid #30363d;
+border-radius:12px;
+padding:18px;
+transition:.2s;
+box-shadow:0 0 15px rgba(0,0,0,.3);
+}
+
+.vm:hover{
+transform:translateY(-3px);
+border-color:#58a6ff;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:14px;
+}
+
+.name{
+font-size:19px;
+font-weight:bold;
+}
+
+.status{
+padding:5px 10px;
+border-radius:20px;
+font-size:12px;
+font-weight:bold;
+}
+
+.healthy{
+background:#238636;
+}
+
+.warning{
+background:#d29922;
+}
+
+.critical{
+background:#da3633;
+}
+
+.offline{
+background:#6e7681;
+}
+
+.metric{
+margin:8px 0;
+font-size:13px;
+}
+
+.bar{
+height:8px;
+background:#30363d;
+border-radius:20px;
+overflow:hidden;
+margin-top:4px;
+}
+
+.fill{
+height:100%;
+border-radius:20px;
+}
+
+.green{
+background:#2ea043;
+}
+
+.orange{
+background:#d29922;
+}
+
+.red{
+background:#f85149;
+}
+
+.info{
+margin-top:14px;
+font-size:13px;
+color:#9ca3af;
+line-height:1.6;
+}
+
+.footer{
+margin-top:30px;
+display:flex;
+justify-content:space-between;
+padding:15px;
+background:#161b22;
+border-radius:10px;
+border:1px solid #30363d;
+}
+
+.alerts{
+color:#ff7b72;
+font-weight:bold;
+}
+
+.online{
+color:#3fb950;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>VM Infrastructure Control Panel</h1>
+<div class="subtitle">
+Production Cluster • Datacenter EU-West • Hypervisor Node Group
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">
+<div>Total Virtual Machines: <b>16</b></div>
+<div class="online">Cluster Status: OPERATIONAL</div>
+<div class="alerts" id="alerts"></div>
+</div>
+
+<script>
+
+const statuses=[
+"Healthy",
+"Healthy",
+"Healthy",
+"Healthy",
+"Warning",
+"Critical",
+"Offline"
+];
+
+const grid=document.getElementById("grid");
+
+function color(v){
+
+if(v<60) return "green";
+if(v<85) return "orange";
+return "red";
+
+}
+
+function create(){
+
+grid.innerHTML="";
+
+let critical=0;
+
+for(let i=1;i<=16;i++){
+
+let cpu=Math.floor(Math.random()*100);
+let ram=Math.floor(Math.random()*100);
+let disk=Math.floor(Math.random()*100);
+let net=Math.floor(Math.random()*100);
+
+let s=statuses[Math.floor(Math.random()*statuses.length)];
+
+if(s=="Critical") critical++;
+
+let cls="healthy";
+
+if(s=="Warning") cls="warning";
+if(s=="Critical") cls="critical";
+if(s=="Offline") cls="offline";
+
+let vm=`
+<div class="vm">
+
+<div class="header">
+<div class="name">VM-${String(i).padStart(2,"0")}</div>
+<div class="status ${cls}">${s}</div>
+</div>
+
+<div class="metric">
+CPU ${cpu}%
+<div class="bar">
+<div class="fill ${color(cpu)}" style="width:${cpu}%"></div>
+</div>
+</div>
+
+<div class="metric">
+RAM ${ram}%
+<div class="bar">
+<div class="fill ${color(ram)}" style="width:${ram}%"></div>
+</div>
+</div>
+
+<div class="metric">
+Disk ${disk}%
+<div class="bar">
+<div class="fill ${color(disk)}" style="width:${disk}%"></div>
+</div>
+</div>
+
+<div class="metric">
+Network ${net}%
+<div class="bar">
+<div class="fill ${color(net)}" style="width:${net}%"></div>
+</div>
+</div>
+
+<div class="info">
+IP: 10.0.${Math.floor(Math.random()*15)}.${Math.floor(Math.random()*255)}<br>
+vCPU: ${2+Math.floor(Math.random()*14)}<br>
+Memory: ${4+Math.floor(Math.random()*60)} GB<br>
+Uptime: ${Math.floor(Math.random()*320)} days<br>
+Last Snapshot: ${Math.floor(Math.random()*24)}h ago<br>
+Storage: ${100+Math.floor(Math.random()*900)} GB
+</div>
+
+</div>
+`;
+
+grid.innerHTML+=vm;
+
+}
+
+document.getElementById("alerts").innerHTML=
+critical+" Critical Alerts";
+}
+
+create();
+
+setInterval(create,5000);
+
+</script>
+
+</body>
+</html>
