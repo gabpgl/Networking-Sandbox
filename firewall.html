@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Firewall Rule Simulator</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+    background:#0d1117;
+    color:white;
+}
+
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 40px;
+    background:#131a22;
+    border-bottom:2px solid #1d2734;
+}
+
+header h1{
+    color:#3ba4ff;
+}
+
+.online{
+    color:#1dd75f;
+    font-weight:bold;
+}
+
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    padding:25px;
+}
+
+.card{
+    background:#171f29;
+    border:1px solid #2b3647;
+    border-radius:12px;
+    padding:20px;
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 0 20px #3ba4ff33;
+}
+
+.card h2{
+    color:#8ec7ff;
+    margin-bottom:10px;
+}
+
+.big{
+    font-size:40px;
+    font-weight:bold;
+}
+
+.green{color:#22d66c;}
+.red{color:#ff5252;}
+.orange{color:#ff9800;}
+
+.alerts{
+    margin:0 25px;
+    background:#171f29;
+    border-radius:12px;
+    padding:20px;
+}
+
+.alert{
+    margin-top:10px;
+    padding:12px;
+    border-radius:8px;
+    background:#3d1d1d;
+    border-left:5px solid red;
+    animation:pulse 1.2s infinite;
+}
+
+@keyframes pulse{
+50%{opacity:.6;}
+}
+
+.controls{
+    display:flex;
+    gap:10px;
+    padding:25px;
+}
+
+button{
+    background:#2196f3;
+    color:white;
+    border:none;
+    padding:12px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:.25s;
+}
+
+button:hover{
+    background:#3ea7ff;
+}
+
+table{
+    width:96%;
+    margin:auto;
+    border-collapse:collapse;
+    margin-bottom:50px;
+}
+
+th{
+    background:#212d3b;
+    color:#8ec7ff;
+}
+
+th,td{
+    border:1px solid #334255;
+    padding:10px;
+    text-align:center;
+}
+
+tr:nth-child(even){
+    background:#141b24;
+}
+
+input,select{
+    width:100%;
+    background:#202a36;
+    color:white;
+    border:1px solid #45576f;
+    padding:6px;
+    border-radius:5px;
+}
+
+.delete{
+    background:#ff3c3c;
+}
+
+.toggle{
+    width:22px;
+    height:22px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div>
+<h1>Firewall Control Center</h1>
+<div class="online">● Firewall Online</div>
+</div>
+
+<div id="clock"></div>
+
+</header>
+
+<div class="dashboard">
+
+<div class="card">
+<h2>Total Rules</h2>
+<div class="big" id="rules">0</div>
+</div>
+
+<div class="card">
+<h2>Allowed</h2>
+<div class="big green" id="allowed">0</div>
+</div>
+
+<div class="card">
+<h2>Denied</h2>
+<div class="big red" id="denied">0</div>
+</div>
+
+<div class="card">
+<h2>Critical Alerts</h2>
+<div class="big orange" id="critical">0</div>
+</div>
+
+</div>
+
+<div class="alerts">
+
+<h2>System Alerts</h2>
+
+<div class="alert">
+⚠ Firewall running normally.
+</div>
+
+</div>
+
+<div class="controls">
+
+<button onclick="addRule()">+ New Rule</button>
+
+<button onclick="generateDemo()">
+Generate Demo Rules
+</button>
+
+<button onclick="exportRules()">
+Export JSON
+</button>
+
+<button onclick="clearRules()">
+Factory Reset
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>#</th>
+
+<th>Rule Name</th>
+
+<th>Interface</th>
+
+<th>Source</th>
+
+<th>Destination</th>
+
+<th>Port</th>
+
+<th>Protocol</th>
+
+<th>Action</th>
+
+<th>TTL Log</th>
+
+<th>Enabled</th>
+
+<th>Delete</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tbody">
+
+</tbody>
+
+</table>
+
+<script>
+
+let rules = JSON.parse(localStorage.getItem("rules")) || [];
+
+function save(){
+localStorage.setItem("rules",JSON.stringify(rules));
+render();
+}
+
+function render(){
+
+const tbody=document.getElementById("tbody");
+
+tbody.innerHTML="";
+
+let allow=0;
+let deny=0;
+
+rules.forEach((r,i)=>{
+
+if(r.action=="Allow") allow++;
+else deny++;
+
+tbody.innerHTML+=`
+
+<tr>
+
+<td>${r.id}</td>
+
+<td><input value="${r.name}" onchange="rules[${i}].name=this.value;save()"></td>
+
+<td>
+
+<select onchange="rules[${i}].iface=this.value;save()">
+
+<option ${r.iface=="LAN"?"selected":""}>LAN</option>
+<option ${r.iface=="WAN"?"selected":""}>WAN</option>
+<option ${r.iface=="DMZ"?"selected":""}>DMZ</option>
+<option ${r.iface=="VPN"?"selected":""}>VPN</option>
+
+</select>
+
+</td>
+
+<td><input value="${r.src}" onchange="rules[${i}].src=this.value;save()"></td>
+
+<td><input value="${r.dst}" onchange="rules[${i}].dst=this.value;save()"></td>
+
+<td><input value="${r.port}" onchange="rules[${i}].port=this.value;save()"></td>
+
+<td>
+
+<select onchange="rules[${i}].proto=this.value;save()">
+
+<option ${r.proto=="TCP"?"selected":""}>TCP</option>
+<option ${r.proto=="UDP"?"selected":""}>UDP</option>
+<option ${r.proto=="ICMP"?"selected":""}>ICMP</option>
+<option ${r.proto=="ANY"?"selected":""}>ANY</option>
+
+</select>
+
+</td>
+
+<td>
+
+<select onchange="rules[${i}].action=this.value;save()">
+
+<option ${r.action=="Allow"?"selected":""}>Allow</option>
+<option ${r.action=="Deny"?"selected":""}>Deny</option>
+
+</select>
+
+</td>
+
+<td>
+
+<input class="toggle" type="checkbox"
+
+${r.ttl?"checked":""}
+
+onchange="rules[${i}].ttl=this.checked;save()">
+
+</td>
+
+<td>
+
+<input class="toggle" type="checkbox"
+
+${r.enabled?"checked":""}
+
+onchange="rules[${i}].enabled=this.checked;save()">
+
+</td>
+
+<td>
+
+<button class="delete" onclick="removeRule(${i})">
+
+Delete
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("rules").innerText=rules.length;
+document.getElementById("allowed").innerText=allow;
+document.getElementById("denied").innerText=deny;
+document.getElementById("critical").innerText=deny;
+
+}
+
+function addRule(){
+
+rules.push({
+
+id:rules.length+1,
+
+name:"New Rule",
+
+iface:"LAN",
+
+src:"192.168.1.10",
+
+dst:"8.8.8.8",
+
+port:"443",
+
+proto:"TCP",
+
+action:"Allow",
+
+ttl:true,
+
+enabled:true
+
+});
+
+save();
+
+}
+
+function removeRule(i){
+
+rules.splice(i,1);
+
+save();
+
+}
+
+function clearRules(){
+
+if(confirm("Delete all rules?")){
+
+rules=[];
+
+save();
+
+}
+
+}
+
+function exportRules(){
+
+const data=JSON.stringify(rules,null,2);
+
+const blob=new Blob([data],{type:"application/json"});
+
+const a=document.createElement("a");
+
+a.href=URL.createObjectURL(blob);
+
+a.download="firewall_rules.json";
+
+a.click();
+
+}
+
+function generateDemo(){
+
+rules=[];
+
+for(let i=1;i<=12;i++){
+
+rules.push({
+
+id:i,
+
+name:"Rule "+i,
+
+iface:["LAN","WAN","DMZ","VPN"][Math.floor(Math.random()*4)],
+
+src:"192.168."+i+".10",
+
+dst:"10.0."+i+".1",
+
+port:["80","443","53","22"][Math.floor(Math.random()*4)],
+
+proto:["TCP","UDP","ICMP"][Math.floor(Math.random()*3)],
+
+action:Math.random()>.5?"Allow":"Deny",
+
+ttl:Math.random()>.5,
+
+enabled:true
+
+});
+
+}
+
+save();
+
+}
+
+setInterval(()=>{
+
+document.getElementById("clock").innerHTML=
+new Date().toLocaleString();
+
+},1000);
+
+render();
+
+</script>
+
+</body>
+</html>
