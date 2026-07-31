@@ -1,268 +1,900 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Virtual Infrastructure Control Panel</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Virtual Infrastructure Control Panel</title>
 
-<style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Segoe UI,Arial,sans-serif;
-}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
-body{
-background:#0d1117;
-color:white;
-padding:25px;
-}
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --card-hover: #1c2129;
+            --border: #30363d;
+            --border-hover: #58a6ff;
+            --text: #e6edf3;
+            --text-dim: #8b949e;
+            --text-faint: #6e7681;
+            --accent: #58a6ff;
+            --green: #2ea043;
+            --green-bg: #238636;
+            --orange: #d29922;
+            --orange-bg: #d29922;
+            --red: #f85149;
+            --red-bg: #da3633;
+            --gray-bg: #6e7681;
+        }
 
-h1{
-font-size:34px;
-margin-bottom:5px;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.subtitle{
-color:#8b949e;
-margin-bottom:25px;
-}
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 28px clamp(16px, 4vw, 32px) 40px;
+        }
 
-.grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:18px;
-}
+        .mono {
+            font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+        }
 
-.vm{
-background:#161b22;
-border:1px solid #30363d;
-border-radius:12px;
-padding:18px;
-transition:.2s;
-box-shadow:0 0 15px rgba(0,0,0,.3);
-}
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
 
-.vm:hover{
-transform:translateY(-3px);
-border-color:#58a6ff;
-}
+        h1 {
+            font-size: clamp(24px, 3vw, 32px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
 
-.header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:14px;
-}
+        .subtitle {
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: .02em;
+        }
 
-.name{
-font-size:19px;
-font-weight:bold;
-}
+        .updated {
+            font-size: 12px;
+            color: var(--text-faint);
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+        }
 
-.status{
-padding:5px 10px;
-border-radius:20px;
-font-size:12px;
-font-weight:bold;
-}
+        .updated b {
+            color: var(--text-dim);
+        }
 
-.healthy{
-background:#238636;
-}
+        /* ---------- summary strip ---------- */
 
-.warning{
-background:#d29922;
-}
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
 
-.critical{
-background:#da3633;
-}
+        .stat {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
 
-.offline{
-background:#6e7681;
-}
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-faint);
+            margin-bottom: 8px;
+        }
 
-.metric{
-margin:8px 0;
-font-size:13px;
-}
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            font-weight: 600;
+        }
 
-.bar{
-height:8px;
-background:#30363d;
-border-radius:20px;
-overflow:hidden;
-margin-top:4px;
-}
+        .stat-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
 
-.fill{
-height:100%;
-border-radius:20px;
-}
+        .stat-bar>div {
+            height: 100%;
+            transition: width .6s ease, background-color .6s ease;
+        }
 
-.green{
-background:#2ea043;
-}
+        .pill-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
 
-.orange{
-background:#d29922;
-}
+        .pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
 
-.red{
-background:#f85149;
-}
+        /* ---------- toolbar ---------- */
 
-.info{
-margin-top:14px;
-font-size:13px;
-color:#9ca3af;
-line-height:1.6;
-}
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
 
-.footer{
-margin-top:30px;
-display:flex;
-justify-content:space-between;
-padding:15px;
-background:#161b22;
-border-radius:10px;
-border:1px solid #30363d;
-}
+        .toolbar input[type="text"] {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 180px;
+            flex: 1 1 180px;
+        }
 
-.alerts{
-color:#ff7b72;
-font-weight:bold;
-}
+        .toolbar input[type="text"]::placeholder {
+            color: var(--text-faint);
+        }
 
-.online{
-color:#3fb950;
-}
+        .chip-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
 
-</style>
+        .chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: .15s;
+        }
+
+        .chip:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        .chip[aria-pressed="true"] {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #0d1117;
+            font-weight: 600;
+        }
+
+        select,
+        .btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: .15s;
+        }
+
+        .btn:hover {
+            border-color: var(--border-hover);
+        }
+
+        .btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #0d1117;
+            font-weight: 600;
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* ---------- grid + cards ---------- */
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .vm {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: transform .15s, border-color .15s;
+            box-shadow: 0 0 15px rgba(0, 0, 0, .25);
+        }
+
+        .vm:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-hover);
+            background: var(--card-hover);
+        }
+
+        .vm.is-offline {
+            opacity: .55;
+        }
+
+        .vm.is-hidden {
+            display: none;
+        }
+
+        .vm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .vm-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status.healthy {
+            background: var(--green-bg);
+            color: #e9ffe9;
+        }
+
+        .status.healthy .dot {
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+
+        .status.warning {
+            background: var(--orange-bg);
+            color: #241a00;
+        }
+
+        .status.critical {
+            background: var(--red-bg);
+            color: #fff5f4;
+        }
+
+        .status.offline {
+            background: var(--gray-bg);
+            color: #0d1117;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .35;
+            }
+        }
+
+        .vm-ip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-faint);
+            margin-bottom: 12px;
+        }
+
+        .metric {
+            margin: 9px 0;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .metric-top {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 4px;
+        }
+
+        .metric-top .val {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .bar {
+            height: 7px;
+            background: var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width .7s ease, background-color .7s ease;
+        }
+
+        .green {
+            background: var(--green);
+        }
+
+        .orange {
+            background: var(--orange);
+        }
+
+        .red {
+            background: var(--red);
+        }
+
+        .gray {
+            background: var(--text-faint);
+        }
+
+        .sparkline {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sparkline svg {
+            width: 100%;
+            height: 28px;
+            display: block;
+        }
+
+        .sparkline .trend {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-faint);
+            white-space: nowrap;
+        }
+
+        .info {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+
+        .info .k {
+            color: var(--text-faint);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+        }
+
+        /* ---------- footer ---------- */
+
+        .footer {
+            margin-top: 26px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px 18px;
+            background: var(--card);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .alerts {
+            color: var(--red);
+            font-weight: 700;
+        }
+
+        .alerts.no-alerts {
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .online {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .degraded {
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        .partial {
+            color: var(--orange);
+            font-weight: 600;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: .001s !important;
+                transition-duration: .001s !important;
+            }
+        }
+
+        @media (max-width:640px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>VM Infrastructure Control Panel</h1>
-<div class="subtitle">
-Production Cluster • Datacenter EU-West • Hypervisor Node Group
-</div>
+    <header>
+        <div>
+            <h1>VM Infrastructure Control Panel</h1>
+            <div class="subtitle">PRODUCTION CLUSTER · DATACENTER EU-WEST · HYPERVISOR NODE GROUP</div>
+        </div>
+        <div class="updated">Last updated<br><b id="lastUpdated" aria-live="polite">—</b></div>
+    </header>
 
-<div class="grid" id="grid"></div>
+    <section class="summary" id="summary" aria-label="Cluster averages"></section>
 
-<div class="footer">
-<div>Total Virtual Machines: <b>16</b></div>
-<div class="online">Cluster Status: OPERATIONAL</div>
-<div class="alerts" id="alerts"></div>
-</div>
+    <section class="toolbar" aria-label="Filter and view controls">
+        <input type="text" id="search" placeholder="Search by name or IP…" aria-label="Search virtual machines">
+        <div class="chip-group" id="filters" role="group" aria-label="Filter by status"></div>
+        <select id="sort" aria-label="Sort virtual machines">
+            <option value="name">Sort: Name</option>
+            <option value="cpu">Sort: CPU (high→low)</option>
+            <option value="ram">Sort: RAM (high→low)</option>
+            <option value="disk">Sort: Disk (high→low)</option>
+            <option value="severity">Sort: Status severity</option>
+        </select>
+        <button class="btn active" id="pauseBtn" type="button">⏸ Pause</button>
+        <button class="btn" id="refreshBtn" type="button">↻ Refresh now</button>
+    </section>
 
-<script>
+    <div class="grid" id="grid" aria-label="Virtual machines"></div>
 
-const statuses=[
-"Healthy",
-"Healthy",
-"Healthy",
-"Healthy",
-"Warning",
-"Critical",
-"Offline"
-];
+    <div class="footer">
+        <div>Total Virtual Machines: <b id="totalVMs">16</b></div>
+        <div id="clusterStatus" class="online">Cluster Status: OPERATIONAL</div>
+        <div class="alerts" id="alerts" aria-live="polite"></div>
+    </div>
 
-const grid=document.getElementById("grid");
+    <script>
+        (function () {
 
-function color(v){
+            const VM_COUNT = 16;
+            const HISTORY_LEN = 20;
+            const TICK_MS = 4000;
 
-if(v<60) return "green";
-if(v<85) return "orange";
-return "red";
+            function randInt(min, max) {return Math.floor(Math.random() * (max - min + 1)) + min;}
+            function clamp(v, lo, hi) {return Math.max(lo, Math.min(hi, v));}
+            function pad(n) {return String(n).padStart(2, "0");}
 
-}
+            /* ---------- data model ---------- */
+            /* Static identity is generated once per VM. Only load metrics drift over time,
+               so a card's IP/specs never "jump" between ticks like the old version did. */
 
-function create(){
+            function makeVM(i) {
+                const cpu = randInt(8, 35);
+                const ram = randInt(15, 45);
+                const disk = randInt(20, 60);
+                const net = randInt(5, 30);
+                return {
+                    id: i,
+                    name: `VM-${pad(i)}`,
+                    ip: `10.0.${randInt(0, 15)}.${randInt(1, 254)}`,
+                    vCPU: 2 + randInt(0, 14),
+                    memoryGB: 4 + randInt(0, 60),
+                    storageGB: 100 + randInt(0, 900),
+                    uptimeDays: randInt(1, 320),
+                    snapshotHrs: randInt(0, 24),
+                    cpu, ram, disk, net,
+                    history: [cpu],
+                    offline: false,
+                    status: "Healthy"
+                };
+            }
 
-grid.innerHTML="";
+            const vms = [];
+            for (let i = 1; i <= VM_COUNT; i++) vms.push(makeVM(i));
 
-let critical=0;
+            function driftValue(v, vol) {
+                // small random walk, with an occasional larger spike so the dashboard
+                // still produces the odd warning/critical VM without every card thrashing
+                const spike = Math.random() < 0.05 ? randInt(15, 35) : 0;
+                return clamp(v + randInt(-vol, vol) + spike, 1, 100);
+            }
 
-for(let i=1;i<=16;i++){
+            function tickVM(vm) {
+                // rare state changes: a VM going offline, or an offline VM recovering
+                if (vm.offline) {
+                    if (Math.random() < 0.12) {
+                        vm.offline = false;
+                        vm.uptimeDays = 0;
+                        vm.snapshotHrs = 0;
+                        vm.cpu = randInt(5, 20); vm.ram = randInt(10, 25); vm.disk = clamp(vm.disk, 1, 100); vm.net = randInt(2, 15);
+                        vm.history = [vm.cpu];
+                        // fall through so status is derived from the fresh metrics below, not left as "Offline"
+                    } else {
+                        vm.status = "Offline";
+                        return;
+                    }
+                } else if (Math.random() < 0.01) {
+                    vm.offline = true;
+                    vm.cpu = 0; vm.ram = 0; vm.net = 0;
+                    vm.status = "Offline";
+                    vm.history.push(0);
+                    if (vm.history.length > HISTORY_LEN) vm.history.shift();
+                    return;
+                } else {
+                    vm.cpu = driftValue(vm.cpu, 9);
+                    vm.ram = driftValue(vm.ram, 6);
+                    vm.disk = clamp(vm.disk + randInt(-1, 2), 1, 100); // disk creeps, doesn't swing
+                    vm.net = driftValue(vm.net, 12);
+                }
 
-let cpu=Math.floor(Math.random()*100);
-let ram=Math.floor(Math.random()*100);
-let disk=Math.floor(Math.random()*100);
-let net=Math.floor(Math.random()*100);
+                vm.history.push(vm.cpu);
+                if (vm.history.length > HISTORY_LEN) vm.history.shift();
 
-let s=statuses[Math.floor(Math.random()*statuses.length)];
+                vm.snapshotHrs = clamp(vm.snapshotHrs + (Math.random() < 0.15 ? -vm.snapshotHrs : 1), 0, 24);
 
-if(s=="Critical") critical++;
+                const peak = Math.max(vm.cpu, vm.ram, vm.disk, vm.net);
+                vm.status = peak >= 90 ? "Critical" : peak >= 75 ? "Warning" : "Healthy";
+            }
 
-let cls="healthy";
+            /* ---------- rendering ---------- */
 
-if(s=="Warning") cls="warning";
-if(s=="Critical") cls="critical";
-if(s=="Offline") cls="offline";
+            const grid = document.getElementById("grid");
+            const cardEls = new Map();
 
-let vm=`
-<div class="vm">
+            function barColor(v) {
+                if (v < 60) return "green";
+                if (v < 85) return "orange";
+                return "red";
+            }
 
-<div class="header">
-<div class="name">VM-${String(i).padStart(2,"0")}</div>
-<div class="status ${cls}">${s}</div>
-</div>
+            function statusClass(s) {return s.toLowerCase();}
 
-<div class="metric">
-CPU ${cpu}%
-<div class="bar">
-<div class="fill ${color(cpu)}" style="width:${cpu}%"></div>
-</div>
-</div>
+            function sparklinePoints(history) {
+                const w = 100, h = 26, pad = 2;
+                const len = history.length;
+                if (len < 2) return "";
+                return history.map((v, i) => {
+                    const x = (i / (len - 1)) * w;
+                    const y = h - pad - (v / 100) * (h - pad * 2);
+                    return `${x.toFixed(1)},${y.toFixed(1)}`;
+                }).join(" ");
+            }
 
-<div class="metric">
-RAM ${ram}%
-<div class="bar">
-<div class="fill ${color(ram)}" style="width:${ram}%"></div>
-</div>
-</div>
+            function trendArrow(history) {
+                if (history.length < 2) return "→";
+                const diff = history[history.length - 1] - history[history.length - 2];
+                if (diff > 3) return "↑";
+                if (diff < -3) return "↓";
+                return "→";
+            }
 
-<div class="metric">
-Disk ${disk}%
-<div class="bar">
-<div class="fill ${color(disk)}" style="width:${disk}%"></div>
-</div>
-</div>
+            function buildCard(vm) {
+                const el = document.createElement("div");
+                el.className = "vm";
+                el.dataset.id = vm.id;
+                el.innerHTML = `
+    <div class="vm-header">
+      <div class="vm-name">${vm.name}</div>
+      <div class="status healthy" data-el="status"><span class="dot"></span><span data-el="statusText">Healthy</span></div>
+    </div>
+    <div class="vm-ip" data-el="ip">IP: ${vm.ip}</div>
 
-<div class="metric">
-Network ${net}%
-<div class="bar">
-<div class="fill ${color(net)}" style="width:${net}%"></div>
-</div>
-</div>
+    ${["cpu", "ram", "disk", "net"].map(k => `
+    <div class="metric">
+      <div class="metric-top"><span>${{cpu: "CPU", ram: "RAM", disk: "Disk", net: "Network"}[k]}</span><span class="val" data-el="${k}Val">0%</span></div>
+      <div class="bar"><div class="fill green" data-el="${k}Fill" style="width:0%"></div></div>
+    </div>`).join("")}
 
-<div class="info">
-IP: 10.0.${Math.floor(Math.random()*15)}.${Math.floor(Math.random()*255)}<br>
-vCPU: ${2+Math.floor(Math.random()*14)}<br>
-Memory: ${4+Math.floor(Math.random()*60)} GB<br>
-Uptime: ${Math.floor(Math.random()*320)} days<br>
-Last Snapshot: ${Math.floor(Math.random()*24)}h ago<br>
-Storage: ${100+Math.floor(Math.random()*900)} GB
-</div>
+    <div class="sparkline">
+      <svg viewBox="0 0 100 26" preserveAspectRatio="none" data-el="spark" role="img" aria-label="CPU trend">
+        <polyline fill="none" stroke="#58a6ff" stroke-width="2" points=""/>
+      </svg>
+      <span class="trend" data-el="trend">→</span>
+    </div>
 
-</div>
-`;
+    <div class="info">
+      <div><span class="k">vCPU:</span> ${vm.vCPU}</div>
+      <div><span class="k">Memory:</span> ${vm.memoryGB} GB</div>
+      <div><span class="k">Storage:</span> ${vm.storageGB} GB</div>
+      <div><span class="k">Uptime:</span> <span data-el="uptime">${vm.uptimeDays} days</span></div>
+      <div><span class="k">Last Snapshot:</span> <span data-el="snapshot">${vm.snapshotHrs}h ago</span></div>
+    </div>
+  `;
+                grid.appendChild(el);
+                cardEls.set(vm.id, {
+                    root: el,
+                    status: el.querySelector('[data-el="status"]'),
+                    statusText: el.querySelector('[data-el="statusText"]'),
+                    cpuVal: el.querySelector('[data-el="cpuVal"]'), cpuFill: el.querySelector('[data-el="cpuFill"]'),
+                    ramVal: el.querySelector('[data-el="ramVal"]'), ramFill: el.querySelector('[data-el="ramFill"]'),
+                    diskVal: el.querySelector('[data-el="diskVal"]'), diskFill: el.querySelector('[data-el="diskFill"]'),
+                    netVal: el.querySelector('[data-el="netVal"]'), netFill: el.querySelector('[data-el="netFill"]'),
+                    spark: el.querySelector('[data-el="spark"] polyline'),
+                    trend: el.querySelector('[data-el="trend"]'),
+                    uptime: el.querySelector('[data-el="uptime"]'),
+                    snapshot: el.querySelector('[data-el="snapshot"]'),
+                });
+            }
 
-grid.innerHTML+=vm;
+            vms.forEach(buildCard);
 
-}
+            function updateCard(vm) {
+                const els = cardEls.get(vm.id);
+                els.root.classList.toggle("is-offline", vm.offline);
 
-document.getElementById("alerts").innerHTML=
-critical+" Critical Alerts";
-}
+                els.status.className = `status ${statusClass(vm.status)}`;
+                els.statusText.textContent = vm.status;
 
-create();
+                ["cpu", "ram", "disk", "net"].forEach(k => {
+                    const v = vm[k];
+                    els[k + "Val"].textContent = v + "%";
+                    els[k + "Fill"].style.width = v + "%";
+                    els[k + "Fill"].className = "fill " + (vm.offline ? "gray" : barColor(v));
+                });
 
-setInterval(create,5000);
+                els.spark.setAttribute("points", sparklinePoints(vm.history));
+                els.trend.textContent = vm.offline ? "—" : trendArrow(vm.history);
 
-</script>
+                els.uptime.textContent = vm.offline ? "offline" : vm.uptimeDays + " days";
+                els.snapshot.textContent = vm.offline ? "—" : vm.snapshotHrs + "h ago";
+            }
+
+            /* ---------- summary strip ---------- */
+
+            const summaryEl = document.getElementById("summary");
+
+            function renderSummary() {
+                const online = vms.filter(v => !v.offline);
+                const avg = k => online.length ? Math.round(online.reduce((s, v) => s + v[k], 0) / online.length) : 0;
+                const counts = {Healthy: 0, Warning: 0, Critical: 0, Offline: 0};
+                vms.forEach(v => counts[v.status]++);
+
+                const stats = [
+                    ["Avg CPU", avg("cpu")],
+                    ["Avg RAM", avg("ram")],
+                    ["Avg Disk", avg("disk")],
+                    ["Avg Network", avg("net")],
+                ];
+
+                summaryEl.innerHTML = stats.map(([label, val]) => `
+    <div class="stat">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${val}%</div>
+      <div class="stat-bar"><div style="width:${val}%; background:var(--${val < 60 ? 'green' : val < 85 ? 'orange' : 'red'})"></div></div>
+    </div>
+  `).join("") + `
+    <div class="stat">
+      <div class="stat-label">Fleet Status</div>
+      <div class="pill-row">
+        <span class="pill">🟢 ${counts.Healthy}</span>
+        <span class="pill">🟡 ${counts.Warning}</span>
+        <span class="pill">🔴 ${counts.Critical}</span>
+        <span class="pill">⚪ ${counts.Offline}</span>
+      </div>
+    </div>
+  `;
+            }
+
+            /* ---------- toolbar: search / filter / sort ---------- */
+
+            let activeFilter = "All";
+            let searchTerm = "";
+            let sortBy = "name";
+
+            const filterOptions = ["All", "Healthy", "Warning", "Critical", "Offline"];
+            const filtersEl = document.getElementById("filters");
+
+            function renderFilterChips() {
+                const counts = {All: vms.length, Healthy: 0, Warning: 0, Critical: 0, Offline: 0};
+                vms.forEach(v => counts[v.status]++);
+                filtersEl.innerHTML = filterOptions.map(f => `
+    <button type="button" class="chip" data-filter="${f}" aria-pressed="${f === activeFilter}">${f} (${counts[f]})</button>
+  `).join("");
+                filtersEl.querySelectorAll(".chip").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        activeFilter = btn.dataset.filter;
+                        applyView();
+                        renderFilterChips();
+                    });
+                });
+            }
+
+            document.getElementById("search").addEventListener("input", (e) => {
+                searchTerm = e.target.value.trim().toLowerCase();
+                applyView();
+            });
+
+            document.getElementById("sort").addEventListener("change", (e) => {
+                sortBy = e.target.value;
+                applyView();
+            });
+
+            const severityRank = {Critical: 0, Offline: 1, Warning: 2, Healthy: 3};
+
+            function applyView() {
+                // visibility: filter + search
+                vms.forEach(vm => {
+                    const matchesFilter = activeFilter === "All" || vm.status === activeFilter;
+                    const matchesSearch = !searchTerm || vm.name.toLowerCase().includes(searchTerm) || vm.ip.includes(searchTerm);
+                    cardEls.get(vm.id).root.classList.toggle("is-hidden", !(matchesFilter && matchesSearch));
+                });
+
+                const anyVisible = vms.some(vm => !cardEls.get(vm.id).root.classList.contains("is-hidden"));
+                let emptyEl = grid.querySelector(".empty-state");
+                if (!anyVisible && !emptyEl) {
+                    emptyEl = document.createElement("div");
+                    emptyEl.className = "empty-state";
+                    emptyEl.textContent = "No virtual machines match this search and filter.";
+                    grid.appendChild(emptyEl);
+                } else if (anyVisible && emptyEl) {
+                    emptyEl.remove();
+                }
+
+                // ordering: sort by assigning CSS order
+                const sorted = [...vms].sort((a, b) => {
+                    if (sortBy === "name") return a.id - b.id;
+                    if (sortBy === "cpu") return b.cpu - a.cpu;
+                    if (sortBy === "ram") return b.ram - a.ram;
+                    if (sortBy === "disk") return b.disk - a.disk;
+                    if (sortBy === "severity") return severityRank[a.status] - severityRank[b.status];
+                    return 0;
+                });
+                sorted.forEach((vm, idx) => {cardEls.get(vm.id).root.style.order = idx;});
+            }
+
+            /* ---------- footer ---------- */
+
+            const alertsEl = document.getElementById("alerts");
+            const clusterStatusEl = document.getElementById("clusterStatus");
+
+            function renderFooter() {
+                const critical = vms.filter(v => v.status === "Critical").length;
+                const warning = vms.filter(v => v.status === "Warning").length;
+                const offline = vms.filter(v => v.status === "Offline").length;
+
+                if (critical === 0 && warning === 0) {
+                    alertsEl.textContent = "No active alerts";
+                    alertsEl.className = "alerts no-alerts";
+                } else {
+                    alertsEl.textContent = `${critical} Critical · ${warning} Warning`;
+                    alertsEl.className = "alerts";
+                }
+
+                if (critical > 0) {
+                    clusterStatusEl.textContent = "Cluster Status: DEGRADED";
+                    clusterStatusEl.className = "degraded";
+                } else if (offline > 0) {
+                    clusterStatusEl.textContent = "Cluster Status: PARTIAL OUTAGE";
+                    clusterStatusEl.className = "partial";
+                } else {
+                    clusterStatusEl.textContent = "Cluster Status: OPERATIONAL";
+                    clusterStatusEl.className = "online";
+                }
+            }
+
+            /* ---------- main tick ---------- */
+
+            const lastUpdatedEl = document.getElementById("lastUpdated");
+
+            function render() {
+                vms.forEach(updateCard);
+                renderSummary();
+                renderFilterChips();
+                renderFooter();
+                applyView();
+                lastUpdatedEl.textContent = new Date().toLocaleTimeString();
+            }
+
+            function tick() {
+                vms.forEach(tickVM);
+                render();
+            }
+
+            render(); // initial paint uses starting values, no jump-cut on load
+
+            let timer = setInterval(tick, TICK_MS);
+            let running = true;
+
+            const pauseBtn = document.getElementById("pauseBtn");
+            pauseBtn.addEventListener("click", () => {
+                running = !running;
+                if (running) {
+                    timer = setInterval(tick, TICK_MS);
+                    pauseBtn.textContent = "⏸ Pause";
+                    pauseBtn.classList.add("active");
+                } else {
+                    clearInterval(timer);
+                    pauseBtn.textContent = "▶ Resume";
+                    pauseBtn.classList.remove("active");
+                }
+            });
+
+            document.getElementById("refreshBtn").addEventListener("click", tick);
+
+        })();
+    </script>
 
 </body>
+
 </html>
