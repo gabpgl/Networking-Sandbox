@@ -1,490 +1,861 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Firewall Rule Simulator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Firewall Rule Simulator</title>
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Segoe UI,Arial,sans-serif;
-}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
-body{
-    background:#0d1117;
-    color:white;
-}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Segoe UI, Arial, sans-serif;
+        }
 
-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:20px 40px;
-    background:#131a22;
-    border-bottom:2px solid #1d2734;
-}
+        body {
+            background: #0d1117;
+            color: white;
+        }
 
-header h1{
-    color:#3ba4ff;
-}
+        .mono {
+            font-family: 'JetBrains Mono', Consolas, monospace;
+        }
 
-.online{
-    color:#1dd75f;
-    font-weight:bold;
-}
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: #131a22;
+            border-bottom: 2px solid #1d2734;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
 
-.dashboard{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:20px;
-    padding:25px;
-}
+        header h1 {
+            color: #3ba4ff;
+        }
 
-.card{
-    background:#171f29;
-    border:1px solid #2b3647;
-    border-radius:12px;
-    padding:20px;
-    transition:.3s;
-}
+        .online {
+            color: #1dd75f;
+            font-weight: bold;
+        }
 
-.card:hover{
-    transform:translateY(-4px);
-    box-shadow:0 0 20px #3ba4ff33;
-}
+        #clock {
+            font-family: 'JetBrains Mono', monospace;
+            color: #8ec7ff;
+            font-size: 14px;
+        }
 
-.card h2{
-    color:#8ec7ff;
-    margin-bottom:10px;
-}
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 25px;
+        }
 
-.big{
-    font-size:40px;
-    font-weight:bold;
-}
+        @media (max-width:800px) {
+            .dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
 
-.green{color:#22d66c;}
-.red{color:#ff5252;}
-.orange{color:#ff9800;}
+        .card {
+            background: #171f29;
+            border: 1px solid #2b3647;
+            border-radius: 12px;
+            padding: 20px;
+            transition: .3s;
+        }
 
-.alerts{
-    margin:0 25px;
-    background:#171f29;
-    border-radius:12px;
-    padding:20px;
-}
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 20px #3ba4ff33;
+        }
 
-.alert{
-    margin-top:10px;
-    padding:12px;
-    border-radius:8px;
-    background:#3d1d1d;
-    border-left:5px solid red;
-    animation:pulse 1.2s infinite;
-}
+        .card h2 {
+            color: #8ec7ff;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
 
-@keyframes pulse{
-50%{opacity:.6;}
-}
+        .big {
+            font-size: 40px;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+        }
 
-.controls{
-    display:flex;
-    gap:10px;
-    padding:25px;
-}
+        .green {
+            color: #22d66c;
+        }
 
-button{
-    background:#2196f3;
-    color:white;
-    border:none;
-    padding:12px 18px;
-    border-radius:8px;
-    cursor:pointer;
-    transition:.25s;
-}
+        .red {
+            color: #ff5252;
+        }
 
-button:hover{
-    background:#3ea7ff;
-}
+        .orange {
+            color: #ff9800;
+        }
 
-table{
-    width:96%;
-    margin:auto;
-    border-collapse:collapse;
-    margin-bottom:50px;
-}
+        .alerts {
+            margin: 0 25px;
+            background: #171f29;
+            border-radius: 12px;
+            padding: 20px;
+        }
 
-th{
-    background:#212d3b;
-    color:#8ec7ff;
-}
+        .alerts h2 {
+            margin-bottom: 10px;
+        }
 
-th,td{
-    border:1px solid #334255;
-    padding:10px;
-    text-align:center;
-}
+        .alert {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #3d1d1d;
+            border-left: 5px solid #ff5252;
+        }
 
-tr:nth-child(even){
-    background:#141b24;
-}
+        .alert.critical {
+            animation: pulse 1.2s infinite;
+        }
 
-input,select{
-    width:100%;
-    background:#202a36;
-    color:white;
-    border:1px solid #45576f;
-    padding:6px;
-    border-radius:5px;
-}
+        .alert.ok {
+            background: #123320;
+            border-left: 5px solid #22d66c;
+        }
 
-.delete{
-    background:#ff3c3c;
-}
+        .alert .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #ffb199;
+            display: block;
+            margin-top: 4px;
+        }
 
-.toggle{
-    width:22px;
-    height:22px;
-}
-</style>
+        @keyframes pulse {
+            50% {
+                opacity: .65;
+            }
+        }
+
+        /* ---------- traffic simulator ---------- */
+
+        .simulator {
+            margin: 25px 25px 0;
+            background: #171f29;
+            border: 1px solid #2b3647;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .simulator h2 {
+            color: #8ec7ff;
+            margin-bottom: 4px;
+        }
+
+        .simulator .hint {
+            color: #7f93ab;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .sim-grid {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .sim-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 130px;
+            flex: 1 1 130px;
+        }
+
+        .sim-field label {
+            font-size: 12px;
+            color: #7f93ab;
+        }
+
+        .sim-field input,
+        .sim-field select {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .sim-grid button {
+            height: 38px;
+            white-space: nowrap;
+        }
+
+        .sim-result {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 15px;
+            display: none;
+        }
+
+        .sim-result.sim-allow {
+            display: block;
+            background: #123320;
+            border-left: 5px solid #22d66c;
+            color: #8dffb8;
+        }
+
+        .sim-result.sim-deny {
+            display: block;
+            background: #3d1d1d;
+            border-left: 5px solid #ff5252;
+            color: #ffb1b1;
+        }
+
+        .sim-trace {
+            margin-top: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            color: #7f93ab;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sim-trace .step {
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .sim-trace .step.matched {
+            background: #123320;
+            color: #8dffb8;
+        }
+
+        .sim-trace .step.no-match {
+            color: #5c6b7d;
+        }
+
+        .sim-trace .step.skipped {
+            color: #4a5566;
+            font-style: italic;
+        }
+
+        .sim-trace .step.not-evaluated {
+            color: #3c4552;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            padding: 25px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: .25s;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #3ea7ff;
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 2px solid #3ba4ff;
+            outline-offset: 2px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin: 0 0 50px;
+        }
+
+        table {
+            width: 96%;
+            margin: auto;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th {
+            background: #212d3b;
+            color: #8ec7ff;
+        }
+
+        th,
+        td {
+            border: 1px solid #334255;
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        tr:nth-child(even) {
+            background: #141b24;
+        }
+
+        tr.risky {
+            box-shadow: inset 3px 0 0 #ff9800;
+        }
+
+        tr.shadowed {
+            opacity: .5;
+        }
+
+        .row-flag {
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            display: block;
+            margin-top: 3px;
+        }
+
+        .row-flag.risk {
+            color: #ff9800;
+        }
+
+        .row-flag.shadow {
+            color: #9aa7b8;
+        }
+
+        input,
+        select {
+            width: 100%;
+            background: #202a36;
+            color: white;
+            border: 1px solid #45576f;
+            padding: 6px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        input.invalid {
+            border-color: #ff5252;
+        }
+
+        .delete {
+            background: #ff3c3c;
+        }
+
+        .delete:hover {
+            background: #ff6b6b;
+        }
+
+        .toggle {
+            width: 22px;
+            height: 22px;
+        }
+    </style>
 
 </head>
 
 <body>
 
-<header>
+    <header>
 
-<div>
-<h1>Firewall Control Center</h1>
-<div class="online">● Firewall Online</div>
-</div>
+        <div>
+            <h1>Firewall Control Center</h1>
+            <div class="online">● Firewall Online</div>
+        </div>
 
-<div id="clock"></div>
+        <div id="clock" class="mono"></div>
 
-</header>
+    </header>
 
-<div class="dashboard">
+    <div class="dashboard">
 
-<div class="card">
-<h2>Total Rules</h2>
-<div class="big" id="rules">0</div>
-</div>
+        <div class="card">
+            <h2>Total Rules</h2>
+            <div class="big" id="rules">0</div>
+        </div>
 
-<div class="card">
-<h2>Allowed</h2>
-<div class="big green" id="allowed">0</div>
-</div>
+        <div class="card">
+            <h2>Allowed (active)</h2>
+            <div class="big green" id="allowed">0</div>
+        </div>
 
-<div class="card">
-<h2>Denied</h2>
-<div class="big red" id="denied">0</div>
-</div>
+        <div class="card">
+            <h2>Denied (active)</h2>
+            <div class="big red" id="denied">0</div>
+        </div>
 
-<div class="card">
-<h2>Critical Alerts</h2>
-<div class="big orange" id="critical">0</div>
-</div>
+        <div class="card">
+            <h2>Critical Alerts</h2>
+            <div class="big orange" id="critical">0</div>
+        </div>
 
-</div>
+    </div>
 
-<div class="alerts">
+    <div class="alerts">
+        <h2>System Alerts</h2>
+        <div id="alertList" aria-live="polite"></div>
+    </div>
 
-<h2>System Alerts</h2>
+    <div class="simulator">
+        <h2>Test Traffic</h2>
+        <div class="hint">Runs a packet through your ruleset top-to-bottom, first match wins — same logic a real
+            firewall uses.</div>
 
-<div class="alert">
-⚠ Firewall running normally.
-</div>
+        <div class="sim-grid">
+            <div class="sim-field">
+                <label for="simSrc">Source IP</label>
+                <input id="simSrc" value="192.168.1.50" placeholder="192.168.1.50">
+            </div>
+            <div class="sim-field">
+                <label for="simDst">Destination IP</label>
+                <input id="simDst" value="10.0.0.5" placeholder="10.0.0.5">
+            </div>
+            <div class="sim-field">
+                <label for="simPort">Port</label>
+                <input id="simPort" value="443" placeholder="443">
+            </div>
+            <div class="sim-field">
+                <label for="simProto">Protocol</label>
+                <select id="simProto">
+                    <option>TCP</option>
+                    <option>UDP</option>
+                    <option>ICMP</option>
+                </select>
+            </div>
+            <button onclick="simulate()">▶ Simulate</button>
+        </div>
 
-</div>
+        <div id="simResult" class="sim-result" role="status"></div>
+        <div id="simTrace" class="sim-trace"></div>
+    </div>
 
-<div class="controls">
+    <div class="controls">
 
-<button onclick="addRule()">+ New Rule</button>
+        <button onclick="addRule()">+ New Rule</button>
 
-<button onclick="generateDemo()">
-Generate Demo Rules
-</button>
+        <button onclick="generateDemo()">
+            Generate Demo Rules
+        </button>
 
-<button onclick="exportRules()">
-Export JSON
-</button>
+        <button onclick="exportRules()">
+            Export JSON
+        </button>
 
-<button onclick="clearRules()">
-Factory Reset
-</button>
+        <button class="delete" onclick="clearRules()">
+            Factory Reset
+        </button>
 
-</div>
+    </div>
 
-<table>
+    <div class="table-wrap">
+        <table>
 
-<thead>
+            <thead>
 
-<tr>
+                <tr>
 
-<th>#</th>
+                    <th scope="col">#</th>
+                    <th scope="col">Rule Name</th>
+                    <th scope="col">Interface</th>
+                    <th scope="col">Source</th>
+                    <th scope="col">Destination</th>
+                    <th scope="col">Port</th>
+                    <th scope="col">Protocol</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">TTL Log</th>
+                    <th scope="col">Enabled</th>
+                    <th scope="col">Delete</th>
 
-<th>Rule Name</th>
+                </tr>
 
-<th>Interface</th>
+            </thead>
 
-<th>Source</th>
+            <tbody id="tbody">
 
-<th>Destination</th>
+            </tbody>
 
-<th>Port</th>
+        </table>
+    </div>
 
-<th>Protocol</th>
+    <script>
 
-<th>Action</th>
+        let rules = JSON.parse(localStorage.getItem("rules")) || [];
 
-<th>TTL Log</th>
+        /* ---------- persistence ---------- */
 
-<th>Enabled</th>
+        function save() {
+            localStorage.setItem("rules", JSON.stringify(rules));
+            render();
+        }
 
-<th>Delete</th>
+        function nextId() {
+            return rules.length ? Math.max(...rules.map(r => r.id)) + 1 : 1;
+        }
 
-</tr>
+        function escAttr(s) {
+            return String(s)
+                .replace(/&/g, "&amp;")
+                .replace(/"/g, "&quot;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
 
-</thead>
+        /* ---------- matching engine (shared by simulator + risk/shadow detection) ---------- */
 
-<tbody id="tbody">
+        function isAnyVal(v) {
+            const t = String(v).trim().toUpperCase();
+            return t === "ANY" || t === "*" || t === "0.0.0.0/0";
+        }
 
-</tbody>
+        function ipToInt(ip) {
+            const parts = String(ip).trim().split(".").map(Number);
+            if (parts.length !== 4 || parts.some(p => Number.isNaN(p) || p < 0 || p > 255)) return null;
+            return parts[0] * 16777216 + parts[1] * 65536 + parts[2] * 256 + parts[3];
+        }
 
-</table>
+        function isValidIpField(v) {
+            if (isAnyVal(v)) return true;
+            const s = String(v).trim();
+            if (s.includes("/")) {
+                const [base, bits] = s.split("/");
+                return ipToInt(base) !== null && +bits >= 0 && +bits <= 32;
+            }
+            if (s.includes("*")) return /^(\d{1,3}\.){0,3}\*$/.test(s) || /^\*$/.test(s);
+            return ipToInt(s) !== null;
+        }
 
-<script>
+        function isValidPortField(v) {
+            const s = String(v).trim();
+            if (s.toUpperCase() === "ANY") return true;
+            return s.split(",").every(part => {
+                part = part.trim();
+                if (part.includes("-")) {
+                    const [lo, hi] = part.split("-").map(Number);
+                    return Number.isInteger(lo) && Number.isInteger(hi) && lo >= 0 && hi <= 65535 && lo <= hi;
+                }
+                const n = Number(part);
+                return Number.isInteger(n) && n >= 0 && n <= 65535;
+            });
+        }
 
-let rules = JSON.parse(localStorage.getItem("rules")) || [];
+        function ipFieldMatches(ruleVal, testIp) {
+            const rv = String(ruleVal).trim();
+            if (isAnyVal(rv)) return true;
+            if (rv.includes("/")) {
+                const [base, bitsStr] = rv.split("/");
+                const bits = parseInt(bitsStr, 10);
+                const testInt = ipToInt(testIp);
+                const baseInt = ipToInt(base);
+                if (testInt === null || baseInt === null || Number.isNaN(bits)) return false;
+                if (bits <= 0) return true;
+                const mask = bits >= 32 ? 0xFFFFFFFF : ((-1 << (32 - bits)) >>> 0);
+                return (testInt & mask) === (baseInt & mask);
+            }
+            if (rv.includes("*")) {
+                const prefix = rv.slice(0, rv.indexOf("*"));
+                return String(testIp).trim().startsWith(prefix);
+            }
+            return rv === String(testIp).trim();
+        }
 
-function save(){
-localStorage.setItem("rules",JSON.stringify(rules));
-render();
-}
+        function portFieldMatches(ruleVal, testPort) {
+            const rv = String(ruleVal).trim();
+            if (rv.toUpperCase() === "ANY") return true;
+            const t = parseInt(testPort, 10);
+            if (Number.isNaN(t)) return false;
+            return rv.split(",").some(part => {
+                part = part.trim();
+                if (part.includes("-")) {
+                    const [lo, hi] = part.split("-").map(Number);
+                    return t >= lo && t <= hi;
+                }
+                return t === Number(part);
+            });
+        }
 
-function render(){
+        function protoFieldMatches(ruleVal, testProto) {
+            const rv = String(ruleVal).trim().toUpperCase();
+            return rv === "ANY" || rv === String(testProto).trim().toUpperCase();
+        }
 
-const tbody=document.getElementById("tbody");
+        function ruleMatchesPacket(r, pkt) {
+            return ipFieldMatches(r.src, pkt.src)
+                && ipFieldMatches(r.dst, pkt.dst)
+                && portFieldMatches(r.port, pkt.port)
+                && protoFieldMatches(r.proto, pkt.proto);
+        }
 
-tbody.innerHTML="";
+        /* ---------- risk + shadow detection ---------- */
 
-let allow=0;
-let deny=0;
+        const SENSITIVE_PORTS = ["22", "23", "3389", "3306", "5432", "1433", "21"];
 
-rules.forEach((r,i)=>{
+        function isRiskyRule(r) {
+            if (r.action !== "Allow" || !r.enabled) return null;
+            if (isAnyVal(r.src) && isAnyVal(r.dst) && isAnyVal(r.port)) {
+                return "Wide open: allows ANY source to ANY destination on ANY port.";
+            }
+            if (r.iface === "WAN" && isAnyVal(r.src) && SENSITIVE_PORTS.includes(String(r.port).trim())) {
+                return `Exposes port ${r.port} to the WAN from any source.`;
+            }
+            return null;
+        }
 
-if(r.action=="Allow") allow++;
-else deny++;
+        function findShadowedBy(r, index) {
+            // a rule is shadowed if an earlier ENABLED rule matches exactly the same
+            // traffic (same src/dst/port/proto) — that earlier rule will always win.
+            for (let j = 0; j < index; j++) {
+                const earlier = rules[j];
+                if (!earlier.enabled || !r.enabled) continue;
+                if (String(earlier.src).trim() === String(r.src).trim()
+                    && String(earlier.dst).trim() === String(r.dst).trim()
+                    && String(earlier.port).trim() === String(r.port).trim()
+                    && String(earlier.proto).trim() === String(r.proto).trim()) {
+                    return earlier;
+                }
+            }
+            return null;
+        }
 
-tbody.innerHTML+=`
+        /* ---------- render ---------- */
 
-<tr>
+        function render() {
+
+            const tbody = document.getElementById("tbody");
+            tbody.innerHTML = "";
+
+            let allow = 0, deny = 0;
+            const alerts = [];
+
+            rules.forEach((r, i) => {
+
+                if (r.enabled) {
+                    if (r.action === "Allow") allow++; else deny++;
+                }
+
+                const shadowBy = findShadowedBy(r, i);
+                const risk = shadowBy ? null : isRiskyRule(r); // a shadowed rule can never fire, so its own risk is moot
+
+                if (risk) alerts.push({type: "risk", rule: r, msg: risk});
+                if (shadowBy) alerts.push({type: "shadow", rule: r, msg: `Unreachable — identical traffic already matches Rule #${shadowBy.id} "${shadowBy.name}" above it.`});
+
+                const rowClasses = [risk ? "risky" : "", shadowBy ? "shadowed" : ""].filter(Boolean).join(" ");
+                const srcInvalid = !isValidIpField(r.src) ? "invalid" : "";
+                const dstInvalid = !isValidIpField(r.dst) ? "invalid" : "";
+                const portInvalid = !isValidPortField(r.port) ? "invalid" : "";
+
+                tbody.innerHTML += `
+<tr class="${rowClasses}">
 
 <td>${r.id}</td>
 
-<td><input value="${r.name}" onchange="rules[${i}].name=this.value;save()"></td>
+<td>
+<input value="${escAttr(r.name)}" onchange="rules[${i}].name=this.value;save()" aria-label="Rule name">
+${risk ? `<span class="row-flag risk">⚠ ${escAttr(risk)}</span>` : ""}
+${shadowBy ? `<span class="row-flag shadow">⛔ shadowed by #${shadowBy.id}</span>` : ""}
+</td>
 
 <td>
-
-<select onchange="rules[${i}].iface=this.value;save()">
-
-<option ${r.iface=="LAN"?"selected":""}>LAN</option>
-<option ${r.iface=="WAN"?"selected":""}>WAN</option>
-<option ${r.iface=="DMZ"?"selected":""}>DMZ</option>
-<option ${r.iface=="VPN"?"selected":""}>VPN</option>
-
+<select onchange="rules[${i}].iface=this.value;save()" aria-label="Interface">
+<option ${r.iface == "LAN" ? "selected" : ""}>LAN</option>
+<option ${r.iface == "WAN" ? "selected" : ""}>WAN</option>
+<option ${r.iface == "DMZ" ? "selected" : ""}>DMZ</option>
+<option ${r.iface == "VPN" ? "selected" : ""}>VPN</option>
 </select>
-
 </td>
 
-<td><input value="${r.src}" onchange="rules[${i}].src=this.value;save()"></td>
+<td><input class="mono ${srcInvalid}" value="${escAttr(r.src)}" onchange="rules[${i}].src=this.value;save()" aria-label="Source"></td>
 
-<td><input value="${r.dst}" onchange="rules[${i}].dst=this.value;save()"></td>
+<td><input class="mono ${dstInvalid}" value="${escAttr(r.dst)}" onchange="rules[${i}].dst=this.value;save()" aria-label="Destination"></td>
 
-<td><input value="${r.port}" onchange="rules[${i}].port=this.value;save()"></td>
+<td><input class="mono ${portInvalid}" value="${escAttr(r.port)}" onchange="rules[${i}].port=this.value;save()" aria-label="Port"></td>
 
 <td>
-
-<select onchange="rules[${i}].proto=this.value;save()">
-
-<option ${r.proto=="TCP"?"selected":""}>TCP</option>
-<option ${r.proto=="UDP"?"selected":""}>UDP</option>
-<option ${r.proto=="ICMP"?"selected":""}>ICMP</option>
-<option ${r.proto=="ANY"?"selected":""}>ANY</option>
-
+<select onchange="rules[${i}].proto=this.value;save()" aria-label="Protocol">
+<option ${r.proto == "TCP" ? "selected" : ""}>TCP</option>
+<option ${r.proto == "UDP" ? "selected" : ""}>UDP</option>
+<option ${r.proto == "ICMP" ? "selected" : ""}>ICMP</option>
+<option ${r.proto == "ANY" ? "selected" : ""}>ANY</option>
 </select>
-
 </td>
 
 <td>
-
-<select onchange="rules[${i}].action=this.value;save()">
-
-<option ${r.action=="Allow"?"selected":""}>Allow</option>
-<option ${r.action=="Deny"?"selected":""}>Deny</option>
-
+<select onchange="rules[${i}].action=this.value;save()" aria-label="Action">
+<option ${r.action == "Allow" ? "selected" : ""}>Allow</option>
+<option ${r.action == "Deny" ? "selected" : ""}>Deny</option>
 </select>
-
 </td>
 
 <td>
-
-<input class="toggle" type="checkbox"
-
-${r.ttl?"checked":""}
-
-onchange="rules[${i}].ttl=this.checked;save()">
-
+<input class="toggle" type="checkbox" ${r.ttl ? "checked" : ""}
+onchange="rules[${i}].ttl=this.checked;save()" aria-label="Toggle TTL logging">
 </td>
 
 <td>
-
-<input class="toggle" type="checkbox"
-
-${r.enabled?"checked":""}
-
-onchange="rules[${i}].enabled=this.checked;save()">
-
+<input class="toggle" type="checkbox" ${r.enabled ? "checked" : ""}
+onchange="rules[${i}].enabled=this.checked;save()" aria-label="Toggle rule enabled">
 </td>
 
 <td>
-
-<button class="delete" onclick="removeRule(${i})">
-
-Delete
-
-</button>
-
+<button class="delete" onclick="removeRule(${i})" aria-label="Delete rule ${escAttr(r.name)}">Delete</button>
 </td>
 
 </tr>
-
 `;
+            });
 
-});
+            document.getElementById("rules").innerText = rules.length;
+            document.getElementById("allowed").innerText = allow;
+            document.getElementById("denied").innerText = deny;
+            document.getElementById("critical").innerText = alerts.length;
 
-document.getElementById("rules").innerText=rules.length;
-document.getElementById("allowed").innerText=allow;
-document.getElementById("denied").innerText=deny;
-document.getElementById("critical").innerText=deny;
+            renderAlerts(alerts);
+        }
 
-}
+        function renderAlerts(alerts) {
+            const el = document.getElementById("alertList");
+            if (alerts.length === 0) {
+                el.innerHTML = `<div class="alert ok">✓ No active alerts. Firewall configuration looks clean.</div>`;
+                return;
+            }
+            el.innerHTML = alerts.map(a => `
+<div class="alert critical">
+⚠ Rule #${a.rule.id} "${escAttr(a.rule.name)}" — ${escAttr(a.msg)}
+<span class="tag">${a.type === "risk" ? "OVEREXPOSED RULE" : "SHADOWED RULE"}</span>
+</div>`).join("");
+        }
 
-function addRule(){
+        /* ---------- traffic simulator ---------- */
 
-rules.push({
+        function simulate() {
+            const pkt = {
+                src: document.getElementById("simSrc").value.trim(),
+                dst: document.getElementById("simDst").value.trim(),
+                port: document.getElementById("simPort").value.trim(),
+                proto: document.getElementById("simProto").value
+            };
 
-id:rules.length+1,
+            let matched = null;
+            const trace = [];
 
-name:"New Rule",
+            rules.forEach(r => {
+                if (!r.enabled) {
+                    trace.push({rule: r, state: "skipped"});
+                    return;
+                }
+                if (matched) {
+                    trace.push({rule: r, state: "not-evaluated"});
+                    return;
+                }
+                if (ruleMatchesPacket(r, pkt)) {
+                    matched = r;
+                    trace.push({rule: r, state: "matched"});
+                } else {
+                    trace.push({rule: r, state: "no-match"});
+                }
+            });
 
-iface:"LAN",
+            const resultEl = document.getElementById("simResult");
+            if (matched) {
+                resultEl.className = "sim-result " + (matched.action === "Allow" ? "sim-allow" : "sim-deny");
+                resultEl.textContent = `${matched.action.toUpperCase()} — matched Rule #${matched.id} "${matched.name}"`;
+            } else {
+                resultEl.className = "sim-result sim-deny";
+                resultEl.textContent = "DENY — no rule matched (implicit default-deny)";
+            }
 
-src:"192.168.1.10",
+            const labels = {
+                matched: "✓ matched — stopped here",
+                "no-match": "✗ no match",
+                skipped: "⊘ disabled, skipped",
+                "not-evaluated": "— not evaluated (a rule above already matched)"
+            };
+            document.getElementById("simTrace").innerHTML = trace.map(t => `
+<div class="step ${t.state}">#${t.rule.id} ${escAttr(t.rule.name)} — ${labels[t.state]}</div>
+`).join("");
+        }
 
-dst:"8.8.8.8",
+        /* ---------- rule CRUD ---------- */
 
-port:"443",
+        function addRule() {
+            rules.push({
+                id: nextId(),
+                name: "New Rule",
+                iface: "LAN",
+                src: "192.168.1.10",
+                dst: "8.8.8.8",
+                port: "443",
+                proto: "TCP",
+                action: "Allow",
+                ttl: true,
+                enabled: true
+            });
+            save();
+        }
 
-proto:"TCP",
+        function removeRule(i) {
+            rules.splice(i, 1);
+            save();
+        }
 
-action:"Allow",
+        function clearRules() {
+            if (confirm("Delete all rules?")) {
+                rules = [];
+                save();
+            }
+        }
 
-ttl:true,
+        function exportRules() {
+            const data = JSON.stringify(rules, null, 2);
+            const blob = new Blob([data], {type: "application/json"});
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "firewall_rules.json";
+            a.click();
+        }
 
-enabled:true
+        function generateDemo() {
+            if (rules.length && !confirm("This replaces your current rules with demo data. Continue?")) return;
 
-});
+            rules = [
+                {id: 1, name: "Allow SSH Admin", iface: "LAN", src: "192.168.1.0/24", dst: "10.0.0.5", port: "22", proto: "TCP", action: "Allow", ttl: true, enabled: true},
+                {id: 2, name: "Allow Web HTTPS", iface: "WAN", src: "ANY", dst: "10.0.0.10", port: "443", proto: "TCP", action: "Allow", ttl: true, enabled: true},
+                {id: 3, name: "Allow Web HTTP", iface: "WAN", src: "ANY", dst: "10.0.0.10", port: "80", proto: "TCP", action: "Allow", ttl: false, enabled: true},
+                {id: 4, name: "Allow DNS", iface: "LAN", src: "192.168.1.0/24", dst: "8.8.8.8", port: "53", proto: "UDP", action: "Allow", ttl: false, enabled: true},
+                {id: 5, name: "Allow VPN Gateway", iface: "VPN", src: "ANY", dst: "10.0.0.1", port: "1194", proto: "UDP", action: "Allow", ttl: true, enabled: true},
+                {id: 6, name: "Deny RDP from WAN", iface: "WAN", src: "ANY", dst: "10.0.0.20", port: "3389", proto: "TCP", action: "Deny", ttl: true, enabled: true},
+                {id: 7, name: "Allow ICMP Ping", iface: "LAN", src: "192.168.1.0/24", dst: "ANY", port: "ANY", proto: "ICMP", action: "Allow", ttl: false, enabled: true},
+                {id: 8, name: "Block Legacy Telnet", iface: "LAN", src: "ANY", dst: "ANY", port: "23", proto: "TCP", action: "Deny", ttl: true, enabled: true},
+                {id: 9, name: "Legacy Catch-All", iface: "WAN", src: "ANY", dst: "ANY", port: "ANY", proto: "ANY", action: "Allow", ttl: false, enabled: true},
+                {id: 10, name: "Allow MySQL Internal", iface: "DMZ", src: "10.0.1.0/24", dst: "10.0.1.50", port: "3306", proto: "TCP", action: "Allow", ttl: true, enabled: true},
+                {id: 11, name: "RDP Exception (added later)", iface: "WAN", src: "ANY", dst: "10.0.0.20", port: "3389", proto: "TCP", action: "Allow", ttl: true, enabled: true},
+                {id: 12, name: "Old FTP Rule", iface: "LAN", src: "ANY", dst: "ANY", port: "21", proto: "TCP", action: "Allow", ttl: false, enabled: false}
+            ];
 
-save();
+            save();
+        }
 
-}
+        /* ---------- clock ---------- */
 
-function removeRule(i){
+        setInterval(() => {
+            document.getElementById("clock").innerHTML = new Date().toLocaleString();
+        }, 1000);
 
-rules.splice(i,1);
+        render();
 
-save();
-
-}
-
-function clearRules(){
-
-if(confirm("Delete all rules?")){
-
-rules=[];
-
-save();
-
-}
-
-}
-
-function exportRules(){
-
-const data=JSON.stringify(rules,null,2);
-
-const blob=new Blob([data],{type:"application/json"});
-
-const a=document.createElement("a");
-
-a.href=URL.createObjectURL(blob);
-
-a.download="firewall_rules.json";
-
-a.click();
-
-}
-
-function generateDemo(){
-
-rules=[];
-
-for(let i=1;i<=12;i++){
-
-rules.push({
-
-id:i,
-
-name:"Rule "+i,
-
-iface:["LAN","WAN","DMZ","VPN"][Math.floor(Math.random()*4)],
-
-src:"192.168."+i+".10",
-
-dst:"10.0."+i+".1",
-
-port:["80","443","53","22"][Math.floor(Math.random()*4)],
-
-proto:["TCP","UDP","ICMP"][Math.floor(Math.random()*3)],
-
-action:Math.random()>.5?"Allow":"Deny",
-
-ttl:Math.random()>.5,
-
-enabled:true
-
-});
-
-}
-
-save();
-
-}
-
-setInterval(()=>{
-
-document.getElementById("clock").innerHTML=
-new Date().toLocaleString();
-
-},1000);
-
-render();
-
-</script>
+    </script>
 
 </body>
+
 </html>
